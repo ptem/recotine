@@ -1,0 +1,67 @@
+# Recotine Configuration Template
+# Copy this file to config/recotine.yaml and fill in your credentials
+
+# Last.fm API Configuration
+lastfm:
+  username: "your_lastfm_username"
+  api_key: "your_lastfm_api_key"
+  api_secret: "your_lastfm_api_secret"
+  session_key: ""  # Will be populated automatically after authentication
+
+# ListenBrainz Configuration
+listenbrainz:
+  username: "your_listenbrainz_username"
+  user_token: "your_listenbrainz_user_token"
+
+# Music Library Configuration
+music:
+  library_path: "/path/to/your/music/library"  # Path to your music SHARE library for nicotine++. Please share to others if downloading.
+  output_path: "/path/to/downloads"            # Where finished playlist tracks (that aren't in your library already) are placed
+
+# Navidrome/Subsonic Configuration (Optional)
+navidrome:
+  url: "http://your-navidrome-server:4533"
+  username: "your_navidrome_username"
+  password: "your_navidrome_password"
+
+# Nicotine++ Docker Configuration (Optional)
+npp:
+  network_mode: host    # Passthrough network to home system (Useful if using a VPN on your docker host)
+  use_music_library: true # Use music/library_path as the shared files dir for nicotine++.
+  
+  # Search restrictions and preferences
+  search:
+    # File format preferences (in order of preference)
+    allowed_extensions: ['mp3', 'flac', 'ogg', 'm4a', 'wma']
+    
+    # Audio quality requirements
+    min_bitrate: 320          # Minimum acceptable bitrate (kbps)
+    max_bitrate: None         # Maximum bitrate (null = no limit)
+    prefer_lossless: true    # Prefer lossless formats when available
+    
+    # Search behavior
+    require_free_slots: true  # Only download from users with free slots
+    max_wait_time: 15         # Maximum time to wait for search results (seconds)
+    max_file_size_mb: 50     # Maximum file size in MB (null = no limit)
+    min_similarity: 0.5       # Minimum similarity score to search query (0.0-1.0)
+    
+    # Search attempt strategies
+    max_search_attempts: 4    # Maximum number of different search queries to try
+    fallback_strategies:      # Different query formats to try in order
+      - "artist title"           # Standard format
+      - "\"artist\" with title includes"  # Quoted artist with title in includes_text
+      - "\"artist\" \"title\""   # Quoted format
+      - "title artist"           # Reversed format
+    
+    # Search quality thresholds
+    sufficient_similarity: 0.8  # Stop trying fallback strategies if this similarity is reached (0.0-1.0)
+    
+    # Content filtering
+    exclude_terms: []         # Terms to avoid (empty = none excluded by default)
+    require_terms: []         # Terms that must be present (empty = none required)
+
+# Playlist Settings
+playlists:
+  fetch_weekly: true
+  max_tracks_per_playlist: 50
+  tag_prefix: "recotine"

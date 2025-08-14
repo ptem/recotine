@@ -1,0 +1,9 @@
+.gitignore
+.junie/
+.venv/
+.backup-npp_data/
+.npp/
+.docs/
+.examples/
+.tests/
+.idea/
