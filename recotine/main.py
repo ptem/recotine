@@ -1,17 +1,18 @@
 #!/usr/bin/env python3
 """Recotine - Music recommendation and download automation tool."""
 
-import sys
-import click
-from pathlib import Path
 import subprocess
+import sys
 import urllib.request
+from pathlib import Path
 
-from config import load_config
-from lastfm_api import create_lastfm_client
-from listenbrainz_api import create_listenbrainz_client
-from docker_manager import DockerManager
-from template_generator import regenerate_template
+import click
+
+from recotine.api.lastfm_api import create_lastfm_client
+from recotine.api.listenbrainz_api import create_listenbrainz_client
+from recotine.cfg.config import load_config
+from recotine.cfg.template_generator import regenerate_template
+from recotine.npp.docker_manager import DockerManager
 
 
 def _print_compact_command_tree(ctx, command, prefix="", is_last=True, max_cmd_width=20):
@@ -79,7 +80,7 @@ class CustomGroup(click.Group):
         _print_compact_command_tree(ctx, self, "", True, max_width)
         
         click.echo()
-        click.echo("Use 'recotine.py COMMAND --help' for more information on a command.")
+        click.echo("Use 'main.py COMMAND --help' for more information on a command.")
     
     def _calculate_max_command_width(self, ctx, command, prefix, depth=0):
         """Calculate the maximum width needed for command display."""

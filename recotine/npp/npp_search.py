@@ -4,18 +4,15 @@ This module provides track-specific search and download functionality that build
 upon the core NPP API but is not strictly part of the API itself.
 """
 
-import logging
-from typing import Optional, List, Dict, Tuple
-from pathlib import Path
-import sys
 import json
+import logging
 import time
+from pathlib import Path
+from typing import Optional, List, Dict
 
-# Add current directory to path to import config and models
-sys.path.append(str(Path(__file__).parent))
-from config import load_config, RecotineConfig
-from models import Track, Playlist, Links
-from npp_api import NicotineAPI, SearchResult, SearchSortBy, NicotineAPIError
+from recotine.api.npp_api import NicotineAPI, SearchResult, SearchSortBy, NicotineAPIError
+from recotine.cfg.config import load_config, RecotineConfig
+from recotine.models import Track, Playlist, Links
 
 logger = logging.getLogger(__name__)
 
@@ -415,7 +412,7 @@ class PlaylistSearcher:
             List of JSON playlist file paths
         """
         if search_dir is None:
-            search_dir = Path("recs")
+            search_dir = Path("../../recs")
         
         if not search_dir.exists():
             return []

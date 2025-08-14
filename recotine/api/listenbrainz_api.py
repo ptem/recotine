@@ -1,9 +1,11 @@
 """ListenBrainz API integration for Recotine."""
 
-import requests
 from typing import List, Dict, Any, Optional
-from config import RecotineConfig
-from models import Playlist, Track, Links
+
+import requests
+
+from recotine.cfg.config import RecotineConfig
+from recotine.models import Playlist, Track, Links
 
 
 def create_track_from_listenbrainz_data(track_data: Dict[str, Any]) -> Track:

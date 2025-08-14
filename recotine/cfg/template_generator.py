@@ -4,17 +4,12 @@ This module provides functionality to programmatically regenerate the configurat
 template based on the defaults defined in the RecotineConfig class.
 """
 
-import inspect
-import re
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
+
 import yaml
 
-try:
-    from .config import RecotineConfig
-except ImportError:
-    # Fallback for when running as main script
-    from config import RecotineConfig
+from recotine.cfg.config import RecotineConfig
 
 
 class TemplateGenerator:

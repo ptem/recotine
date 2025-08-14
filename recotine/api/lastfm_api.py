@@ -1,18 +1,13 @@
 """Last.fm API integration for Recotine."""
 
-import os
-import requests
-import pylast
 from pathlib import Path
-from typing import List, Dict, Any, Optional
-from datetime import datetime
+from typing import List, Dict, Any
 
-from config import RecotineConfig
-from models import Playlist, Track, Links
+import pylast
+import requests
 
-
-
-
+from recotine.cfg.config import RecotineConfig
+from recotine.models import Playlist, Track, Links
 
 
 class LastFmClient:

@@ -1,9 +1,9 @@
 """Configuration management for Recotine."""
 
-import os
-import yaml
 from pathlib import Path
 from typing import Dict, Any, Optional
+
+import yaml
 
 
 class RecotineConfig:
@@ -17,7 +17,7 @@ class RecotineConfig:
         """
         if config_path is None:
             # Get the project root directory (parent of src directory where this file is located)
-            project_root = Path(__file__).parent.parent
+            project_root = Path(__file__).parent.parent.parent
             
             # First try config/recotine.yaml, then fall back to ./recotine.yaml
             config_in_config_dir = project_root / "config" / "recotine.yaml"

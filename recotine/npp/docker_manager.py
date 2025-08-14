@@ -2,12 +2,12 @@
 Docker Manager for Recotine - handles Nicotine++ container lifecycle
 """
 
+import logging
 import os
 import subprocess
-import logging
-from pathlib import Path
-from typing import Dict, Any, Optional
 import time
+from pathlib import Path
+from typing import Dict, Any
 
 logger = logging.getLogger(__name__)
 

@@ -4,11 +4,11 @@ This module provides standardized classes for handling playlist and track data
 from different sources (e.g., Last.fm, ListenBrainz) in a consistent format.
 """
 
-from dataclasses import dataclass, field
-from typing import List, Dict, Any, Optional
-from pathlib import Path
-from datetime import datetime
 import json
+from dataclasses import dataclass, field
+from datetime import datetime
+from pathlib import Path
+from typing import List, Dict, Any, Optional
 
 
 @dataclass
@@ -40,6 +40,34 @@ class Track:
                 "url": self.links.url
             }
         }
+    
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "Track":
+        """Create Track from dictionary representation."""
+        links_data = data.get("links", {})
+        links = Links(
+            mbid=links_data.get("mbid"),
+            url=links_data.get("url")
+        )
+        
+        return cls(
+            title=data["title"],
+            artists=data.get("artists", []),
+            links=links
+        )
+    
+    @classmethod
+    def from_json(cls, json_str: str) -> "Track":
+        """Create Track from JSON string."""
+        data = json.loads(json_str)
+        return cls.from_dict(data)
+    
+    @classmethod
+    def from_json_file(cls, file_path: Path) -> "Track":
+        """Create Track from JSON file."""
+        with open(file_path, "r", encoding="utf-8") as f:
+            json_str = f.read()
+        return cls.from_json(json_str)
 
 @dataclass
 class Playlist:
@@ -91,4 +119,36 @@ class Playlist:
             print(f"Saved playlist JSON '{self.title}' to {file_path}")
 
         return file_path
+    
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "Playlist":
+        """Create Playlist from dictionary representation."""
+        links_data = data.get("links", {})
+        links = Links(
+            mbid=links_data.get("mbid"),
+            url=links_data.get("url")
+        )
+        
+        tracks_data = data.get("tracks", [])
+        tracks = [Track.from_dict(track_data) for track_data in tracks_data]
+        
+        return cls(
+            title=data["title"],
+            creator=data["creator"],
+            links=links,
+            tracks=tracks
+        )
+    
+    @classmethod
+    def from_json(cls, json_str: str) -> "Playlist":
+        """Create Playlist from JSON string."""
+        data = json.loads(json_str)
+        return cls.from_dict(data)
+    
+    @classmethod
+    def from_json_file(cls, file_path: Path) -> "Playlist":
+        """Create Playlist from JSON file."""
+        with open(file_path, "r", encoding="utf-8") as f:
+            json_str = f.read()
+        return cls.from_json(json_str)
     

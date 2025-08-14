@@ -18,17 +18,18 @@ Author: Junie
 Date: 2025-08-12
 """
 
-import requests
-import time
 import logging
-from typing import Optional, List, Dict, Any, Union
+import sys
+import time
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-import sys
+from typing import Optional, List, Dict, Any
+
+import requests
 
 # Add current directory to path to import modules
-sys.path.append(str(Path(__file__).parent))
+sys.path.append(str(Path(__file__).parent.parent))
 
 
 # Configure logging
