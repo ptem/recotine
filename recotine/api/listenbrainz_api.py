@@ -148,8 +148,8 @@ class ListenBrainzClient:
         self.user_token = config.listenbrainz_user_token
         self.session = requests.Session()
         self.session.headers.update({
-            'Authorization': f'Token {self.user_token}',
-            'Content-Type': 'application/json'
+            "Authorization": f"Token {self.user_token}",
+            "Content-Type": "application/json"
         })
     
     def get_user_playlists(self) -> List[Dict[str, Any]]:
@@ -164,7 +164,7 @@ class ListenBrainzClient:
             response = self.session.get(url)
             response.raise_for_status()
             data = response.json()
-            return data.get('playlists', [])
+            return data.get("playlists", [])
         except requests.RequestException as e:
             print(f"Failed to fetch user playlists: {e}")
             return []
@@ -181,13 +181,13 @@ class ListenBrainzClient:
             response.raise_for_status()
             data = response.json()
 
-            return data['playlists']
+            return data["playlists"]
         except requests.RequestException as e:
             print(f"Failed to fetch recommendations: {e}")
             return []
 
     def get_mbid_from_playlist(self, playlist: Dict[str, any]) -> Optional[str]:
-        url = playlist['identifier']
+        url = playlist["identifier"]
 
         if url:
             mbid = url.split('/')[-1]

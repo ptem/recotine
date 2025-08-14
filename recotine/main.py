@@ -18,10 +18,10 @@ from recotine.npp.docker_manager import DockerManager
 def _print_compact_command_tree(ctx, command, prefix="", is_last=True, max_cmd_width=20):
     """Recursively print compact command tree with descriptions aligned on same line."""
     # Get the command name
-    if hasattr(command, 'name') and command.name:
+    if hasattr(command, "name") and command.name:
         cmd_name = command.name
     else:
-        cmd_name = getattr(command, '_name', 'cli')
+        cmd_name = getattr(command, "_name", "cli")
     
     # Print current command with tree formatting and description on same line
     tree_char = "└── " if is_last else "├── "
@@ -29,7 +29,7 @@ def _print_compact_command_tree(ctx, command, prefix="", is_last=True, max_cmd_w
     
     # Get command help/description if available
     help_text = ""
-    if hasattr(command, 'get_short_help_str'):
+    if hasattr(command, "get_short_help_str"):
         help_text = command.get_short_help_str(limit=80)
     
     if help_text:
@@ -44,15 +44,15 @@ def _print_compact_command_tree(ctx, command, prefix="", is_last=True, max_cmd_w
     # If this is a group, recursively print its subcommands
     if isinstance(command, click.Group):
         subcommands = []
-        if hasattr(command, 'commands'):
+        if hasattr(command, "commands"):
             subcommands = list(command.commands.values())
-        elif hasattr(command, 'list_commands'):
+        elif hasattr(command, "list_commands"):
             cmd_names = command.list_commands(ctx)
             subcommands = [command.get_command(ctx, name) for name in cmd_names if command.get_command(ctx, name)]
         
         if subcommands:
             # Sort subcommands by name for consistent output
-            subcommands.sort(key=lambda x: getattr(x, 'name', ''))
+            subcommands.sort(key=lambda x: getattr(x, "name", ""))
             
             new_prefix = prefix + ("    " if is_last else "│   ")
             for i, subcmd in enumerate(subcommands):
@@ -80,15 +80,15 @@ class CustomGroup(click.Group):
         _print_compact_command_tree(ctx, self, "", True, max_width)
         
         click.echo()
-        click.echo("Use 'main.py COMMAND --help' for more information on a command.")
+        click.echo("Use \"./rec COMMAND --help\" for more information on a command.")
     
     def _calculate_max_command_width(self, ctx, command, prefix, depth=0):
         """Calculate the maximum width needed for command display."""
         max_width = 0
         
-        if hasattr(command, 'commands'):
+        if hasattr(command, "commands"):
             subcommands = list(command.commands.values())
-        elif hasattr(command, 'list_commands'):
+        elif hasattr(command, "list_commands"):
             cmd_names = command.list_commands(ctx)
             subcommands = [command.get_command(ctx, name) for name in cmd_names if command.get_command(ctx, name)]
         else:
@@ -97,7 +97,7 @@ class CustomGroup(click.Group):
         for i, subcmd in enumerate(subcommands):
             is_last = (i == len(subcommands) - 1)
             tree_char = "└── " if is_last else "├── "
-            cmd_name = getattr(subcmd, 'name', 'unknown')
+            cmd_name = getattr(subcmd, "name", "unknown")
             cmd_display = f"{prefix}{tree_char}{cmd_name}"
             max_width = max(max_width, len(cmd_display))
             
@@ -119,7 +119,7 @@ def cli(ctx):
     # """
     ctx.ensure_object(dict)
     try:
-        ctx.obj['config'] = load_config()
+        ctx.obj["config"] = load_config()
     except (FileNotFoundError, ValueError) as e:
         click.echo(f"Configuration error: {e}", err=True)
         sys.exit(1)
@@ -362,26 +362,26 @@ def setup_npp_install(ctx):
         click.echo("📋 Here's how to manage your Nicotine++ Docker container:")
         click.echo("")
         click.echo("  🚀 Start the container:")
-        click.echo("     ./recotine npp start")
+        click.echo("     ./rec npp start")
         click.echo("")
         click.echo("  📊 Check container status:")
-        click.echo("     ./recotine npp status")
+        click.echo("     ./rec npp status")
         click.echo("")
         click.echo("  📜 View container logs:")
-        click.echo("     ./recotine npp logs")
-        click.echo("     ./recotine npp logs --lines 100  # Show more lines")
+        click.echo("     ./rec npp logs")
+        click.echo("     ./rec npp logs --lines 100  # Show more lines")
         click.echo("")
         click.echo("  🖥️  Execute commands in container:")
-        click.echo("     ./recotine npp exec \"ls\"")
-        click.echo("     ./recotine npp exec \"ls /data/nicotine/uploads\"  # Check to see if your share is mounted!")
+        click.echo("     ./rec npp exec \"ls\"")
+        click.echo("     ./rec npp exec \"ls /data/nicotine/uploads\"  # Check to see if your share is mounted!")
         click.echo("")
         click.echo("  🔄 Restart container:")
-        click.echo("     ./recotine npp restart")
+        click.echo("     ./rec npp restart")
         click.echo("")
         click.echo("  🛑 Stop container:")
-        click.echo("     ./recotine npp stop")
+        click.echo("     ./rec npp stop")
         click.echo("")
-        click.echo("💡 Start with './recotine npp start' to begin using Nicotine++!")
+        click.echo("💡 Start with './rec npp start' to begin using Nicotine++!")
         
     except subprocess.CalledProcessError as e:
         click.echo(f"❌ Failed to clone repository: {e}", err=True)
@@ -441,7 +441,7 @@ def _apply_config_internal(ctx, skip_fetch=False):
             
             if not docker_compose_path.exists():
                 click.echo("❌ No local docker-compose.yaml found and GitHub fetch failed!", err=True)
-                click.echo("Run './recotine npp setup install' first to clone the repository.")
+                click.echo("Run './rec npp setup install' first to clone the repository.")
                 sys.exit(1)
             
             # Read current docker-compose.yaml as fallback
@@ -490,7 +490,7 @@ MUSIC_LIBRARY_PATH={library_path}
     click.echo(f"✅ Created .env file at {env_path}")
     click.echo("🎉 Configuration applied successfully!")
     if not skip_fetch:
-        click.echo("🐳 You can now use './recotine npp restart' to apply changes")
+        click.echo("🐳 You can now use './rec npp restart' to apply changes")
 
 
 @setup_npp.command("apply-config")

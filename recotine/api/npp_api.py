@@ -28,8 +28,10 @@ from typing import Optional, List, Dict, Any
 
 import requests
 
+from recotine.paths import PROJECT_ROOT
+
 # Add current directory to path to import modules
-sys.path.append(str(Path(__file__).parent.parent))
+sys.path.append(str(PROJECT_ROOT / "recotine"))
 
 
 # Configure logging
@@ -65,23 +67,23 @@ class SearchResult:
     file_attributes: Optional[Dict] = None
     
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'SearchResult':
+    def from_dict(cls, data: Dict[str, Any]) -> "SearchResult":
         """Create SearchResult from API response dictionary"""
         return cls(
-            user=data.get('user', ''),
-            ip_address=data.get('ip_address', ''),
-            port=data.get('port', 0),
-            has_free_slots=data.get('has_free_slots', False),
-            inqueue=data.get('inqueue', 0),
-            ulspeed=data.get('ulspeed', 0),
-            file_name=data.get('file_name', ''),
-            file_extension=data.get('file_extension', ''),
-            file_path=data.get('file_path', ''),
-            file_size=data.get('file_size', 0),
-            file_h_length=data.get('file_h_length', ''),
-            bitrate=data.get('bitrate'),
-            search_similarity=data.get('search_similarity', 0.0),
-            file_attributes=data.get('file_attributes')
+            user=data.get("user", ""),
+            ip_address=data.get("ip_address", ""),
+            port=data.get("port", 0),
+            has_free_slots=data.get("has_free_slots", False),
+            inqueue=data.get("inqueue", 0),
+            ulspeed=data.get("ulspeed", 0),
+            file_name=data.get("file_name", ""),
+            file_extension=data.get("file_extension", ""),
+            file_path=data.get("file_path", ""),
+            file_size=data.get("file_size", 0),
+            file_h_length=data.get("file_h_length", ""),
+            bitrate=data.get("bitrate"),
+            search_similarity=data.get("search_similarity", 0.0),
+            file_attributes=data.get("file_attributes")
         )
     
     @property
@@ -95,7 +97,7 @@ class SearchResult:
         return self.bitrate is not None and self.bitrate >= 320
     
     def __str__(self) -> str:
-        return f"{self.file_name} - {self.user} ({self.bitrate or 'Unknown'} kbps)"
+        return f'{self.file_name} - {self.user} ({self.bitrate or "Unknown"} kbps)'
 
 
 @dataclass 
@@ -111,17 +113,17 @@ class DownloadInfo:
     file_attributes: Optional[Dict] = None
     
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> 'DownloadInfo':
+    def from_dict(cls, data: Dict[str, Any]) -> "DownloadInfo":
         """Create DownloadInfo from API response dictionary"""
         return cls(
-            username=data.get('username', ''),
-            virtual_path=data.get('virtual_path', ''),
-            download_path=data.get('download_path', ''),
-            status=data.get('status', ''),
-            size=data.get('size', 0),
-            current_byte_offset=data.get('current_byte_offset'),
-            download_percentage=data.get('download_percentage'),
-            file_attributes=data.get('file_attributes')
+            username=data.get("username", ""),
+            virtual_path=data.get("virtual_path", ""),
+            download_path=data.get("download_path", ""),
+            status=data.get("status", ""),
+            size=data.get("size", 0),
+            current_byte_offset=data.get("current_byte_offset"),
+            download_percentage=data.get("download_percentage"),
+            file_attributes=data.get("file_attributes")
         )
     
     @property
@@ -158,7 +160,7 @@ class NicotineAPI:
             base_url: Base URL of the Nicotine++ Web API
             timeout: Request timeout in seconds
         """
-        self.base_url = base_url.rstrip('/')
+        self.base_url = base_url.rstrip("/")
         self.timeout = timeout
         self.session = requests.Session()
         self.session.timeout = timeout
@@ -175,7 +177,7 @@ class NicotineAPI:
         try:
             response = self.session.get(f"{self.base_url}/foo")
             is_available = response.status_code == 200 and response.json().get("message") == "Hello World"
-            logger.info(f"API availability check: {'Available' if is_available else 'Unavailable'}")
+            logger.info(f'API availability check: {"Available" if is_available else "Unavailable"}')
             return is_available
         except requests.exceptions.RequestException as e:
             logger.warning(f"API availability check failed: {e}")

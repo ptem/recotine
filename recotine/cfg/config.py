@@ -5,6 +5,8 @@ from typing import Dict, Any, Optional
 
 import yaml
 
+from recotine.paths import CONFIG_DIR, PROJECT_ROOT
+
 
 class RecotineConfig:
     """Handles loading and validation of Recotine configuration."""
@@ -16,12 +18,9 @@ class RecotineConfig:
             config_path: Path to recotine.yaml file. Defaults to config/recotine.yaml, then ./recotine.yaml
         """
         if config_path is None:
-            # Get the project root directory (parent of src directory where this file is located)
-            project_root = Path(__file__).parent.parent.parent
-            
             # First try config/recotine.yaml, then fall back to ./recotine.yaml
-            config_in_config_dir = project_root / "config" / "recotine.yaml"
-            config_in_root = project_root / "recotine.yaml"
+            config_in_config_dir = CONFIG_DIR / "recotine.yaml"
+            config_in_root = CONFIG_DIR.parent / "recotine.yaml"
             
             if config_in_config_dir.exists():
                 config_path = config_in_config_dir
@@ -279,7 +278,7 @@ def regenerate_template(output_path: Optional[str] = None) -> Path:
             # Try absolute import if relative import fails
             import sys
             from pathlib import Path
-            sys.path.insert(0, str(Path(__file__).parent))
+            sys.path.insert(0, str(PROJECT_ROOT / "recotine"))
             from template_generator import regenerate_template as _regenerate_template
             return _regenerate_template(output_path)
         except ImportError:

@@ -10,6 +10,7 @@ from typing import Any, Dict, Optional
 import yaml
 
 from recotine.cfg.config import RecotineConfig
+from recotine.paths import TEMPLATES_DIR
 
 
 class TemplateGenerator:
@@ -30,8 +31,7 @@ class TemplateGenerator:
         defaults = {}
         
         # Try to load existing template file to get current defaults
-        project_root = Path(__file__).parent.parent
-        template_path = project_root / "config" / "templates" / "_template_recotine.yaml"
+        template_path = TEMPLATES_DIR / "_template_recotine.yaml"
         if template_path.exists():
             try:
                 with open(template_path, 'r', encoding='utf-8') as f:
@@ -72,9 +72,9 @@ class TemplateGenerator:
                     'max_search_attempts': 4,
                     'fallback_strategies': [
                         'artist title',
+                        '"artist" with title includes',
                         '"artist" "title"',
-                        'title artist', 
-                        '"artist" with title includes'
+                        'title artist'
                     ],
                     'sufficient_similarity': 0.8,
                     'exclude_terms': [],
@@ -87,7 +87,7 @@ class TemplateGenerator:
                 'tag_prefix': 'recotine'
             }
         }
-        
+
         return defaults
     
     def _set_nested_value(self, data: Dict, key_path: str, value: Any):
@@ -261,9 +261,7 @@ class TemplateGenerator:
             Path to the generated template file
         """
         if output_path is None:
-            # Always use project root relative path, not current working directory
-            project_root = Path(__file__).parent.parent
-            output_path = project_root / "config" / "templates" / "_template_recotine.yaml"
+            output_path = TEMPLATES_DIR / "_template_recotine.yaml"
         else:
             output_path = Path(output_path)
         

@@ -9,6 +9,8 @@ import time
 from pathlib import Path
 from typing import Dict, Any
 
+from recotine.paths import PROJECT_ROOT
+
 logger = logging.getLogger(__name__)
 
 
@@ -19,7 +21,7 @@ class DockerManager:
         self.config = config
         self.docker_config = config.get('docker', {})
         self.music_config = config.get('music', {})
-        self.docker_dir = Path(__file__).parent.parent / '.npp'
+        self.docker_dir = PROJECT_ROOT / '.npp'
         
     def _create_env_file(self) -> Path:
         """Create .env file from configuration"""

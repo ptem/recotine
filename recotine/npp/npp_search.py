@@ -13,6 +13,7 @@ from typing import Optional, List, Dict
 from recotine.api.npp_api import NicotineAPI, SearchResult, SearchSortBy, NicotineAPIError
 from recotine.cfg.config import load_config, RecotineConfig
 from recotine.models import Track, Playlist, Links
+from recotine.paths import OUTPUT_DIR
 
 logger = logging.getLogger(__name__)
 
@@ -412,7 +413,7 @@ class PlaylistSearcher:
             List of JSON playlist file paths
         """
         if search_dir is None:
-            search_dir = Path("../../recs")
+            search_dir = OUTPUT_DIR
         
         if not search_dir.exists():
             return []

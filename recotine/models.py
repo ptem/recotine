@@ -10,6 +10,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import List, Dict, Any, Optional
 
+from recotine.paths import OUTPUT_DIR
+
 
 @dataclass
 class Links:
@@ -111,7 +113,7 @@ class Playlist:
         if filename is None:
             filename = f"{self.title.lower().replace(' ','_').replace('.','')}.json"
 
-        file_path = Path("../recs") / Path(date_str) / filename
+        file_path = OUTPUT_DIR / Path(date_str) / filename
         file_path.parent.mkdir(exist_ok=True)
 
         with open(file_path, 'w', encoding='utf-8') as f:
