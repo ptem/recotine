@@ -139,14 +139,89 @@ class RecotineConfig:
     
     # Nicotine++ configuration (optional)
     @property
-    def npp_network_mode(self) -> str:
-        """Get Nicotine++ Docker network mode."""
-        return self._get_nested('npp.network_mode', 'host')
+    def npp_share_library_path(self) -> Optional[str]:
+        """Get Nicotine++ shared library path."""
+        return self._get_nested('npp.share_library_path')
     
     @property
-    def npp_use_music_library(self) -> bool:
-        """Check if Nicotine++ should use music library as shared files directory."""
-        return self._get_nested('npp.use_music_library', True)
+    def npp_api_host(self) -> str:
+        """Get Nicotine++ API host."""
+        return self._get_nested('npp.npp_api.host', 'localhost')
+    
+    @property
+    def npp_api_port(self) -> int:
+        """Get Nicotine++ API port."""
+        return self._get_nested('npp.npp_api.port', 7770)
+    
+    # Nicotine++ server configuration
+    @property
+    def npp_server(self) -> Optional[tuple]:
+        """Get Nicotine++ server address (host, port)."""
+        return self._get_nested('npp.npp_config.server')
+    
+    @property
+    def npp_login(self) -> Optional[str]:
+        """Get Nicotine++ login username."""
+        return self._get_nested('npp.npp_config.login')
+    
+    @property
+    def npp_password(self) -> Optional[str]:
+        """Get Nicotine++ login password."""
+        return self._get_nested('npp.npp_config.passw')
+    
+    
+    @property
+    def npp_upnp(self) -> Optional[bool]:
+        """Get Nicotine++ UPnP setting."""
+        return self._get_nested('npp.npp_config.upnp')
+    
+    @property
+    def npp_upnp_interval(self) -> Optional[int]:
+        """Get Nicotine++ UPnP interval setting."""
+        return self._get_nested('npp.npp_config.upnp_interval')
+    
+    # Nicotine++ userinfo configuration
+    @property
+    def npp_user_description(self) -> Optional[str]:
+        """Get Nicotine++ user description."""
+        return self._get_nested('npp.npp_config.descr')
+    
+    @property
+    def npp_user_picture(self) -> Optional[str]:
+        """Get Nicotine++ user profile picture URL."""
+        return self._get_nested('npp.npp_config.pic')
+    
+    # Nicotine++ logging configuration
+    @property
+    def npp_debug(self) -> Optional[bool]:
+        """Get Nicotine++ debug mode setting."""
+        return self._get_nested('npp.npp_config.debug')
+    
+    @property
+    def npp_debug_modes(self) -> Optional[list]:
+        """Get Nicotine++ debug modes list."""
+        return self._get_nested('npp.npp_config.debugmodes')
+    
+    # Nicotine++ web_api configuration
+    @property
+    def npp_web_api_enable(self) -> Optional[bool]:
+        """Get Nicotine++ web API enable setting."""
+        return self._get_nested('npp.npp_config.web_api_enable')
+    
+    @property
+    def npp_web_api_host(self) -> Optional[str]:
+        """Get Nicotine++ web API host."""
+        return self._get_nested('npp.npp_config.web_api_host')
+    
+    @property
+    def npp_web_api_port(self) -> Optional[int]:
+        """Get Nicotine++ web API port."""
+        return self._get_nested('npp.npp_config.web_api_port')
+    
+    @property
+    def npp_web_api_max_simultaneous_searches(self) -> Optional[int]:
+        """Get Nicotine++ web API max simultaneous searches."""
+        return self._get_nested('npp.npp_config.web_api_max_simultaneous_searches')
     
     # Nicotine++ search configuration
     @property
@@ -230,6 +305,27 @@ class RecotineConfig:
     def playlists_tag_prefix(self) -> str:
         """Get tag prefix for downloaded tracks."""
         return self._get_nested('playlists.tag_prefix', 'recotine')
+    
+    # Gluetun configuration properties
+    @property
+    def gluetun_wireguard_private_key(self) -> Optional[str]:
+        """Get Gluetun WireGuard private key."""
+        return self._get_nested('gluetun.wireguard_private_key')
+    
+    @property
+    def gluetun_server_hostnames(self) -> Optional[str]:
+        """Get Gluetun server hostnames."""
+        return self._get_nested('gluetun.server_hostnames')
+    
+    @property
+    def gluetun_wireguard_address(self) -> Optional[str]:
+        """Get Gluetun WireGuard address."""
+        return self._get_nested('gluetun.wireguard_address')
+    
+    @property
+    def gluetun_tz(self) -> Optional[str]:
+        """Get Gluetun timezone."""
+        return self._get_nested('gluetun.tz')
     
     @property
     def raw_config(self) -> Dict[str, Any]:

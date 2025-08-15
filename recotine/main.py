@@ -206,7 +206,7 @@ def npp():
 def npp_start_cmd(ctx):
     """Start Nicotine++ container."""
     config = ctx.obj['config']
-    docker_manager = DockerManager(config.raw_config)
+    docker_manager = DockerManager(config)
     
     click.echo("🚀 Starting Nicotine++ container...")
     
@@ -222,7 +222,7 @@ def npp_start_cmd(ctx):
 def npp_stop_cmd(ctx):
     """Stop Nicotine++ containers."""
     config = ctx.obj['config']
-    docker_manager = DockerManager(config.raw_config)
+    docker_manager = DockerManager(config)
     
     click.echo("🛑 Stopping Nicotine++ containers...")
     
@@ -238,7 +238,7 @@ def npp_stop_cmd(ctx):
 def npp_restart_cmd(ctx):
     """Restart Nicotine++ containers."""
     config = ctx.obj['config']
-    docker_manager = DockerManager(config.raw_config)
+    docker_manager = DockerManager(config)
     
     click.echo("🔄 Restarting Nicotine++ containers...")
     
@@ -254,7 +254,7 @@ def npp_restart_cmd(ctx):
 def npp_status_cmd(ctx):
     """Show Nicotine++ container status."""
     config = ctx.obj['config']
-    docker_manager = DockerManager(config.raw_config)
+    docker_manager = DockerManager(config)
     
     click.echo("📊 Nicotine++ Container Status:")
     status = docker_manager.get_status()
@@ -276,7 +276,7 @@ def npp_status_cmd(ctx):
 def npp_logs_cmd(ctx, service, lines):
     """Show Nicotine++ container logs."""
     config = ctx.obj['config']
-    docker_manager = DockerManager(config.raw_config)
+    docker_manager = DockerManager(config)
     
     click.echo(f"📜 Nicotine++ Container Logs (last {lines} lines):")
     logs = docker_manager.get_logs(service, lines)
@@ -290,7 +290,7 @@ def npp_logs_cmd(ctx, service, lines):
 def npp_exec_cmd(ctx, command, service):
     """Execute command in Nicotine++ container."""
     config = ctx.obj['config']
-    docker_manager = DockerManager(config.raw_config)
+    docker_manager = DockerManager(config)
     
     click.echo(f"🖥️  Executing '{command}' in {service} container:")
     output = docker_manager.exec_command(command, service)
@@ -307,7 +307,7 @@ def setup_npp():
 @click.pass_context
 def setup_npp_install(ctx):
     """Install Nicotine++ by cloning git repository to .npp directory and apply configuration."""
-    target_path = Path("../.npp")
+    target_path = Path(".npp")
     repo_url = "https://github.com/pachiclana/nicotine-plus-plus.git"
     
     if target_path.exists():
@@ -396,97 +396,101 @@ def setup_npp_install(ctx):
 def _apply_config_internal(ctx, skip_fetch=False):
     """Internal function to apply config settings from npp section to .npp/docker-compose.yaml."""
     config = ctx.obj["config"]
-    docker_compose_path = Path("../.npp/docker-compose.yaml")
-    
+    docker_compose_path = Path(".npp/docker-compose.yaml")
+    template_path = Path("config/templates/_template_docker-compose.yaml")
+
     # Ensure .npp directory exists
     docker_compose_path.parent.mkdir(exist_ok=True)
-    
-    # Get npp and music config sections
+
+    # Copy template file to destination and determine if we should use it
+    template_copied = False
+    if template_path.exists():
+        click.echo(f"📄 Copying template from {template_path} to {docker_compose_path}")
+        import shutil
+        shutil.copy2(template_path, docker_compose_path)
+        click.echo("✅ Template copied successfully")
+        template_copied = True
+    else:
+        click.echo(f"⚠️  Template file not found at {template_path}")
+
+    # Get npp config section
     npp_config = config.raw_config.get("npp", {})
-    music_config = config.raw_config.get("music", {})
-    
-    network_mode = npp_config.get("network_mode", "host")
-    use_music_library = npp_config.get("use_music_library", False)
-    library_path = music_config.get("library_path", "")
-    
+
+    share_library_path = npp_config.get("share_library_path", "")
+
+    # Get npp_api configuration
+    npp_api_config = npp_config.get("npp_api", {})
+
     click.echo(f"🔧 Applying config settings to {docker_compose_path}")
-    
-    if skip_fetch:
+
+    if skip_fetch or template_copied:
         # Use existing docker-compose.yaml from the cloned repository
         if not docker_compose_path.exists():
             click.echo("❌ No docker-compose.yaml found after clone!", err=True)
             sys.exit(1)
-        
+
         with open(docker_compose_path, "r") as f:
             lines = f.readlines()
     else:
         # Fetch fresh docker-compose.yaml from GitHub
         docker_compose_url = "https://raw.githubusercontent.com/pachiclana/nicotine-plus-plus/master/docker-compose.yaml"
         click.echo("📥 Fetching fresh docker-compose.yaml from GitHub...")
-        
+
         try:
             with urllib.request.urlopen(docker_compose_url) as response:
                 docker_compose_content = response.read().decode('utf-8')
-            
+
             # Write the fresh content to the local file first
             with open(docker_compose_path, "w") as f:
                 f.write(docker_compose_content)
-            
+
             click.echo("✅ Successfully fetched fresh docker-compose.yaml")
             lines = docker_compose_content.splitlines(keepends=True)
-            
+
         except Exception as e:
             click.echo(f"⚠️  Failed to fetch from GitHub: {e}", err=True)
             click.echo("🔄 Using existing local docker-compose.yaml if available...")
-            
+
             if not docker_compose_path.exists():
                 click.echo("❌ No local docker-compose.yaml found and GitHub fetch failed!", err=True)
                 click.echo("Run './rec npp setup install' first to clone the repository.")
                 sys.exit(1)
-            
+
             # Read current docker-compose.yaml as fallback
             with open(docker_compose_path, "r") as f:
                 lines = f.readlines()
-    
+
     # Apply modifications
     modified_lines = []
-    network_mode_added = False
-    
+
     for line in lines:
-        # Apply network_mode setting - replace existing or add after build line
-        if line.strip().startswith("network_mode:"):
-            modified_lines.append(f"    network_mode: {network_mode}\n")
-            click.echo(f"✅ Set network_mode to: {network_mode}")
-            network_mode_added = True
-        # Add network_mode after build line if not already present
-        elif line.strip().startswith("build:") and not network_mode_added:
+        # Skip port mapping modifications - NPP_PORT no longer used
+        if "7770:7770" in line or ('"' in line and ":7770" in line and "7770:" in line):
+            # Keep original port mapping since NPP_PORT is no longer applicable
             modified_lines.append(line)
-            modified_lines.append(f"    network_mode: {network_mode}\n")
-            click.echo(f"✅ Added network_mode: {network_mode}")
-            network_mode_added = True
-            continue
-        # Apply volume changes for uploads if use_music_library is true
-        elif ":/data/nicotine/uploads" in line and use_music_library:
+            click.echo("ℹ️ Keeping original port mapping (NPP_PORT no longer used)")
+        # Apply volume changes for uploads if share_library_path is configured
+        elif ":/data/nicotine/uploads" in line and share_library_path:
             # Replace the uploads volume with environment variable
             indent = line[:line.index("-")]  # Preserve indentation
-            modified_lines.append(f"{indent}- ${{MUSIC_LIBRARY_PATH}}:/data/nicotine/uploads\n")
-            click.echo("✅ Changed uploads volume to use ${MUSIC_LIBRARY_PATH} environment variable")
+            modified_lines.append(f"{indent}- ${{SHARE_LIBRARY_PATH}}:/data/nicotine/uploads\n")
+            click.echo("✅ Changed uploads volume to use ${SHARE_LIBRARY_PATH} environment variable")
         else:
             modified_lines.append(line)
-    
+
     # Write the modified content back
     with open(docker_compose_path, "w") as f:
         f.writelines(modified_lines)
-    
+
     # Create .env file
-    env_path = Path("../.npp/.env")
+    env_path = Path(".npp/.env")
     env_content = f"""# Auto-generated Docker Environment Configuration
-MUSIC_LIBRARY_PATH={library_path}
+SHARE_LIBRARY_PATH={share_library_path}
 """
-    
+
     with open(env_path, "w") as f:
         f.write(env_content)
-    
+
     click.echo(f"✅ Created .env file at {env_path}")
     click.echo("🎉 Configuration applied successfully!")
     if not skip_fetch:

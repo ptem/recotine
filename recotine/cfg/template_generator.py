@@ -58,8 +58,7 @@ class TemplateGenerator:
         print("⚠️ Using fallback defaults since template couldn't be loaded")
         defaults = {
             'npp': {
-                'network_mode': 'host',
-                'use_music_library': True,
+                'share_library_path': '/path/to/shared/music',
                 'search': {
                     'allowed_extensions': ['mp3', 'flac', 'ogg', 'm4a', 'wma'],
                     'min_bitrate': 320,
@@ -154,13 +153,24 @@ class TemplateGenerator:
             "",
         ])
         
-        # Navidrome section (optional)
+        # Navidrome section
         template_lines.extend([
-            "# Navidrome/Subsonic Configuration (Optional)",
+            "# Navidrome/Subsonic Configuration",
             "navidrome:",
             '  url: "http://your-navidrome-server:4533"',
             '  username: "your_navidrome_username"',
             '  password: "your_navidrome_password"',
+            "",
+        ])
+        
+        # Gluetun section
+        template_lines.extend([
+            "# Gluetun VPN Docker Configuration",
+            "gluetun:",
+            '  wireguard_private_key: "wireguardprivkey"',
+            '  server_hostnames: "node-us-999.protonvpn.net"',
+            '  wireguard_address: "10.x.y.z/99"',
+            '  tz: "America/New_York"',
             "",
         ])
         
@@ -171,8 +181,7 @@ class TemplateGenerator:
         template_lines.extend([
             "# Nicotine++ Docker Configuration (Optional)",
             "npp:",
-            f"  network_mode: {npp_defaults.get('network_mode', 'host')}    # Passthrough network to home system (Useful if using a VPN on your docker host)",
-            f"  use_music_library: {str(npp_defaults.get('use_music_library', True)).lower()} # Use music/library_path as the shared files dir for nicotine++.",
+            f'  share_library_path: "{npp_defaults.get("share_library_path", "/path/to/shared/music")}" # Path to music library to share via nicotine++',
             "  ",
             "  # Search restrictions and preferences",
             "  search:",

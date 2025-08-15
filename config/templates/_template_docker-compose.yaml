@@ -1,0 +1,43 @@
+services:
+  gluetun:
+    image: qmcgaw/gluetun:v3
+    container_name: npp-gluetun
+    cap_add: [NET_ADMIN]
+    devices: [/dev/net/tun:/dev/net/tun]
+    volumes:
+      - ./npp_data/gluetun:/tmp/gluetun
+    environment: # See https://github.com/qdm12/gluetun-wiki/tree/main/setup#setup
+      VPN_SERVICE_PROVIDER: protonvpn
+      VPN_TYPE: wireguard
+
+      WIREGUARD_PRIVATE_KEY: ${WIREGUARD_PRIVATE_KEY}
+      WIREGUARD_ADDRESS: ${WIREGUARD_ADDRESS}
+      SERVER_HOSTNAMES: ${SERVER_HOSTNAMES}
+      TZ: ${TZ}
+
+      VPN_PORT_FORWARDING: on
+      VPN_PORT_FORWARDING_STATUS_FILE: /tmp/gluetun/forwarded_port
+      PUBLICIP_FILE: /tmp/gluetun/ip
+      LOG_LEVEL: info
+    healthcheck:
+      test: ["CMD", "test", "-f", "/tmp/gluetun/forwarded_port"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
+
+  nicotine:
+    image: "nicotine-plus-plus:alpha"
+    depends_on:
+      gluetun:
+        condition: service_healthy
+    container_name: npp
+    restart: unless-stopped
+    network_mode: service:gluetun
+    volumes:
+      - ./npp_data/transfers/downloads:/data/nicotine/downloads
+      - ./npp_data/transfers/incomplete:/data/nicotine/incomplete
+      - ./npp_data/transfers/received:/data/nicotine/received
+      - ${SHARE_LIBRARY_PATH}:/data/nicotine/uploads
+      - ./npp_data/config:/config/nicotine
+      - ./npp_data/gluetun:/tmp/gluetun

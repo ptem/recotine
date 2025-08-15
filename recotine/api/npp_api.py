@@ -29,9 +29,22 @@ from typing import Optional, List, Dict, Any
 import requests
 
 from recotine.paths import PROJECT_ROOT
+from recotine.cfg.config import RecotineConfig
 
 # Add current directory to path to import modules
 sys.path.append(str(PROJECT_ROOT / "recotine"))
+
+
+def _get_default_api_url() -> str:
+    """Get the default API URL from configuration, fallback to hardcoded default."""
+    try:
+        config = RecotineConfig()
+        host = config.npp_api_host
+        port = config.npp_api_port
+        return f"http://{host}:{port}"
+    except Exception:
+        # Fallback to hardcoded default if config loading fails
+        return "http://localhost:7770"
 
 
 # Configure logging
@@ -152,14 +165,16 @@ class NicotineAPI:
     through the Nicotine++ Web API.
     """
     
-    def __init__(self, base_url: str = "http://localhost:7770", timeout: int = 30):
+    def __init__(self, base_url: Optional[str] = None, timeout: int = 30):
         """
         Initialize the API wrapper
 
         Args:
-            base_url: Base URL of the Nicotine++ Web API
+            base_url: Base URL of the Nicotine++ Web API (if None, uses configuration)
             timeout: Request timeout in seconds
         """
+        if base_url is None:
+            base_url = _get_default_api_url()
         self.base_url = base_url.rstrip("/")
         self.timeout = timeout
         self.session = requests.Session()
@@ -632,7 +647,7 @@ class NicotineAPI:
 def quick_search(query: str, 
                 min_bitrate: int = 192, 
                 limit: int = 10,
-                api_url: str = "http://localhost:7770") -> List[SearchResult]:
+                api_url: Optional[str] = None) -> List[SearchResult]:
     """
     Quick search function for simple use cases
     
@@ -640,11 +655,13 @@ def quick_search(query: str,
         query: Search term
         min_bitrate: Minimum bitrate for audio files
         limit: Maximum number of results
-        api_url: API base URL
+        api_url: API base URL (if None, uses configuration)
         
     Returns:
         List of search results
     """
+    if api_url is None:
+        api_url = _get_default_api_url()
     api = NicotineAPI(api_url)
     
     if not api.is_available():
@@ -661,7 +678,7 @@ def quick_search(query: str,
 def auto_download(query: str,
                  min_bitrate: int = 320,
                  prefer_free_slots: bool = True,
-                 api_url: str = "http://localhost:7770") -> Optional[str]:
+                 api_url: Optional[str] = None) -> Optional[str]:
     """
     Automatically search and download the best result
     
@@ -669,11 +686,13 @@ def auto_download(query: str,
         query: Search term
         min_bitrate: Minimum acceptable bitrate
         prefer_free_slots: Prefer users with free upload slots
-        api_url: API base URL
+        api_url: API base URL (if None, uses configuration)
         
     Returns:
         Download response message or None
     """
+    if api_url is None:
+        api_url = _get_default_api_url()
     api = NicotineAPI(api_url)
     
     if not api.is_available():

@@ -26,14 +26,20 @@ class TrackSearcher:
     the npp_api, models, and config modules but isn't strictly part of the core API.
     """
     
-    def __init__(self, api_url: str = "http://localhost:7770", timeout: int = 30):
+    def __init__(self, api_url: Optional[str] = None, timeout: int = 30):
         """
         Initialize the TrackSearcher.
         
         Args:
-            api_url: Base URL for the Nicotine++ API
+            api_url: Base URL for the Nicotine++ API (if None, uses configuration)
             timeout: Request timeout in seconds
         """
+        if api_url is None:
+            try:
+                config = RecotineConfig()
+                api_url = f"http://{config.npp_api_host}:{config.npp_api_port}"
+            except Exception:
+                api_url = "http://localhost:7770"  # Fallback
         self.api = NicotineAPI(api_url, timeout)
     
     def search_track(self, 
@@ -205,12 +211,12 @@ class PlaylistSearcher:
     comprehensive reporting of search results and failures.
     """
     
-    def __init__(self, api_url: str = "http://localhost:7770", timeout: int = 30, output_dir: Optional[Path] = None):
+    def __init__(self, api_url: Optional[str] = None, timeout: int = 30, output_dir: Optional[Path] = None):
         """
         Initialize the PlaylistSearcher.
         
         Args:
-            api_url: Base URL for the Nicotine++ API
+            api_url: Base URL for the Nicotine++ API (if None, uses configuration)
             timeout: Request timeout in seconds
             output_dir: Base output directory for downloads (defaults to ./output/playlists/)
         """
@@ -483,14 +489,14 @@ class PlaylistSearcher:
 # Convenience functions for backward compatibility and simple use cases
 def search_track(track: Track, 
                 config: Optional[RecotineConfig] = None,
-                api_url: str = "http://localhost:7770") -> List[SearchResult]:
+                api_url: Optional[str] = None) -> List[SearchResult]:
     """
     Search for a track using a TrackSearcher instance.
     
     Args:
         track: Track object containing title and artists
         config: RecotineConfig instance (optional)
-        api_url: API base URL
+        api_url: API base URL (if None, uses configuration)
         
     Returns:
         List of SearchResult objects matching the track
@@ -501,14 +507,14 @@ def search_track(track: Track,
 
 def download_track(track: Track,
                   config: Optional[RecotineConfig] = None,
-                  api_url: str = "http://localhost:7770") -> Optional[str]:
+                  api_url: Optional[str] = None) -> Optional[str]:
     """
     Search for and download the best result for a track.
     
     Args:
         track: Track object to search for and download
         config: RecotineConfig instance (optional)
-        api_url: API base URL
+        api_url: API base URL (if None, uses configuration)
         
     Returns:
         Download response message or None if no suitable results found
@@ -520,7 +526,7 @@ def download_track(track: Track,
 # Playlist search convenience functions
 def search_playlist_file(playlist_path: Path,
                         config: Optional[RecotineConfig] = None,
-                        api_url: str = "http://localhost:7770",
+                        api_url: Optional[str] = None,
                         download: bool = True) -> Dict[str, List[Track]]:
     """
     Search for tracks in a playlist file using a PlaylistSearcher instance.
@@ -528,7 +534,7 @@ def search_playlist_file(playlist_path: Path,
     Args:
         playlist_path: Path to the playlist file
         config: RecotineConfig instance (optional)
-        api_url: API base URL
+        api_url: API base URL (if None, uses configuration)
         download: Whether to download found tracks (default: True)
         
     Returns:
@@ -540,7 +546,7 @@ def search_playlist_file(playlist_path: Path,
 
 def search_all_playlists(search_dir: Path = None,
                         config: Optional[RecotineConfig] = None,
-                        api_url: str = "http://localhost:7770",
+                        api_url: Optional[str] = None,
                         download: bool = True) -> None:
     """
     Search for tracks in all available playlists using a PlaylistSearcher instance.
@@ -548,7 +554,7 @@ def search_all_playlists(search_dir: Path = None,
     Args:
         search_dir: Directory to search for playlists (defaults to ./recs/)
         config: RecotineConfig instance (optional)
-        api_url: API base URL
+        api_url: API base URL (if None, uses configuration)
         download: Whether to download found tracks (default: True)
     """
     searcher = PlaylistSearcher(api_url)
