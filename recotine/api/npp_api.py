@@ -27,6 +27,7 @@ from pathlib import Path
 from typing import Optional, List, Dict, Any
 
 import requests
+import json
 
 from recotine.paths import PROJECT_ROOT
 from recotine.cfg.config import RecotineConfig
@@ -177,10 +178,68 @@ class NicotineAPI:
             base_url = _get_default_api_url()
         self.base_url = base_url.rstrip("/")
         self.timeout = timeout
-        self.session = requests.Session()
-        self.session.timeout = timeout
+        
+        # Initialize DockerManager instead of requests session
+        try:
+            # Import DockerManager locally to avoid circular import
+            from recotine.npp.docker_manager import DockerManager
+            config = RecotineConfig()
+            self.docker_manager = DockerManager(config)
+        except Exception as e:
+            logger.warning(f"Failed to initialize DockerManager: {e}")
+            self.docker_manager = None
 
         logger.info(f"Initialized NicotineAPI with base URL: {self.base_url}")
+
+    def _exec_container_request(self, method: str, endpoint: str, json_data: Optional[Dict] = None) -> Dict[str, Any]:
+        """
+        Execute HTTP request from within the Docker container
+        
+        Args:
+            method: HTTP method (GET, POST, DELETE, etc.)
+            endpoint: API endpoint (e.g., "/foo", "/search/global")
+            json_data: Optional JSON data to send
+            
+        Returns:
+            Dictionary containing status_code and json response
+            
+        Raises:
+            NicotineAPIError: If Docker manager is not available or command execution fails
+        """
+        if self.docker_manager is None:
+            raise NicotineAPIError("DockerManager not initialized. Cannot execute container requests.")
+        
+        # Create a more robust Python script using base64 encoding for JSON data
+        url = f"http://localhost:7770{endpoint}"
+        
+        if json_data:
+            # Serialize JSON data and encode it in base64 to avoid quote escaping issues
+            import base64
+            json_str = json.dumps(json_data, separators=(',', ':'))
+            json_b64 = base64.b64encode(json_str.encode('utf-8')).decode('ascii')
+            python_code = f'import requests,json,base64;data=json.loads(base64.b64decode("{json_b64}").decode("utf-8"));r=requests.{method.lower()}("{url}",json=data);print(json.dumps({{"status_code":r.status_code,"json":r.json()}}))'
+        else:
+            python_code = f'import requests,json;r=requests.{method.lower()}("{url}");print(json.dumps({{"status_code":r.status_code,"json":r.json()}}))'
+        
+        try:
+            # Execute the Python code in the container
+            command = f'python3 -c \'{python_code}\''
+            output = self.docker_manager.exec_command(command)
+            
+            # Parse the JSON output
+            result = json.loads(output.strip())
+            
+            if "error" in result:
+                raise NicotineAPIError(f"Container request failed: {result['error']}")
+                
+            return result
+            
+        except json.JSONDecodeError as e:
+            logger.error(f"Failed to parse container response: {output}")
+            raise NicotineAPIError(f"Failed to parse container response: {e}")
+        except Exception as e:
+            logger.error(f"Container request execution failed: {e}")
+            raise NicotineAPIError(f"Container request execution failed: {e}")
 
     def is_available(self) -> bool:
         """
@@ -190,11 +249,11 @@ class NicotineAPI:
             True if API is available, False otherwise
         """
         try:
-            response = self.session.get(f"{self.base_url}/foo")
-            is_available = response.status_code == 200 and response.json().get("message") == "Hello World"
+            result = self._exec_container_request("GET", "/foo")
+            is_available = result["status_code"] == 200 and result["json"].get("message") == "Hello World"
             logger.info(f'API availability check: {"Available" if is_available else "Unavailable"}')
             return is_available
-        except requests.exceptions.RequestException as e:
+        except (NicotineAPIError, KeyError) as e:
             logger.warning(f"API availability check failed: {e}")
             return False
 
@@ -247,10 +306,12 @@ class NicotineAPI:
             search_data["smart_filters"] = smart_filters
         
         try:
-            response = self.session.get(f"{self.base_url}/search/global", json=search_data)
-            response.raise_for_status()
+            result = self._exec_container_request("GET", "/search/global", search_data)
             
-            results_data = response.json()
+            if result["status_code"] != 200:
+                raise NicotineAPIError(f"Search request failed with status {result['status_code']}")
+            
+            results_data = result["json"]
             
             # Handle various response types
             if isinstance(results_data, str):
@@ -352,9 +413,9 @@ class NicotineAPI:
                 logger.warning(f"Unexpected search response format: {type(results_data)}")
                 return []
                 
-        except requests.exceptions.RequestException as e:
+        except NicotineAPIError as e:
             logger.error(f"Search request failed: {e}")
-            raise NicotineAPIError(f"Search request failed: {e}")
+            raise
     
     def search_and_filter(self,
                          query: str,
@@ -473,16 +534,18 @@ class NicotineAPI:
             download_data["file_attributes"] = file_attributes
         
         try:
-            response = self.session.get(f"{self.base_url}/download", json=download_data)
-            response.raise_for_status()
+            result = self._exec_container_request("GET", "/download", download_data)
             
-            result = response.json()
-            logger.info(f"Download enqueued successfully: {result}")
-            return result
+            if result["status_code"] != 200:
+                raise NicotineAPIError(f"Download request failed with status {result['status_code']}")
             
-        except requests.exceptions.RequestException as e:
+            response_data = result["json"]
+            logger.info(f"Download enqueued successfully: {response_data}")
+            return response_data
+            
+        except NicotineAPIError as e:
             logger.error(f"Download request failed: {e}")
-            raise NicotineAPIError(f"Download request failed: {e}")
+            raise
     
     def download_search_result(self, result: SearchResult) -> str:
         """
@@ -552,18 +615,20 @@ class NicotineAPI:
             NicotineAPIError: If request fails
         """
         try:
-            response = self.session.get(f"{self.base_url}/download/getdownloads")
-            response.raise_for_status()
+            result = self._exec_container_request("GET", "/download/getdownloads")
             
-            downloads_data = response.json()
+            if result["status_code"] != 200:
+                raise NicotineAPIError(f"Get downloads request failed with status {result['status_code']}")
+            
+            downloads_data = result["json"]
             downloads = [DownloadInfo.from_dict(item) for item in downloads_data]
             
             logger.info(f"Retrieved {len(downloads)} downloads")
             return downloads
             
-        except requests.exceptions.RequestException as e:
+        except NicotineAPIError as e:
             logger.error(f"Get downloads request failed: {e}")
-            raise NicotineAPIError(f"Get downloads request failed: {e}")
+            raise
     
     def get_active_downloads(self) -> List[DownloadInfo]:
         """
@@ -590,16 +655,18 @@ class NicotineAPI:
         logger.info("Cleaning up downloads")
         
         try:
-            response = self.session.delete(f"{self.base_url}/download/abortandclean")
-            response.raise_for_status()
+            result = self._exec_container_request("DELETE", "/download/abortandclean")
             
-            result = response.json()
-            logger.info(f"Downloads cleaned: {result}")
-            return result
+            if result["status_code"] != 200:
+                raise NicotineAPIError(f"Clean downloads request failed with status {result['status_code']}")
             
-        except requests.exceptions.RequestException as e:
+            response_data = result["json"]
+            logger.info(f"Downloads cleaned: {response_data}")
+            return response_data
+            
+        except NicotineAPIError as e:
             logger.error(f"Clean downloads request failed: {e}")
-            raise NicotineAPIError(f"Clean downloads request failed: {e}")
+            raise
     
     def wait_for_downloads(self, 
                           timeout: int = 300, 

@@ -435,7 +435,16 @@ class DockerManager:
         self._create_env_file()
         
         cmd = ['docker-compose', '-f', str(self.docker_dir / 'docker-compose.yaml'), '--env-file', '.env', 'exec', '-T', service]
-        cmd.extend(command.split())
+        
+        # Handle complex commands with quoted arguments properly
+        import shlex
+        try:
+            # Use shlex to properly parse shell commands with quotes
+            cmd_parts = shlex.split(command)
+            cmd.extend(cmd_parts)
+        except ValueError:
+            # Fallback to simple split if shlex fails
+            cmd.extend(command.split())
         
         try:
             logger.info(f"Executing in container: {' '.join(cmd)}")
